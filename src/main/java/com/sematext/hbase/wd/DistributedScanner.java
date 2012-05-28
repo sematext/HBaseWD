@@ -21,7 +21,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
@@ -92,7 +92,7 @@ public class DistributedScanner implements ResultScanner {
     }
   }
 
-  public static DistributedScanner create(HTable hTable, Scan originalScan, AbstractRowKeyDistributor keyDistributor) throws IOException {
+  public static DistributedScanner create(HTableInterface hTable, Scan originalScan, AbstractRowKeyDistributor keyDistributor) throws IOException {
     Scan[] scans = keyDistributor.getDistributedScans(originalScan);
 
     ResultScanner[] rss = new ResultScanner[scans.length];
