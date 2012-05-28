@@ -36,7 +36,7 @@ public class WdTableInputFormat extends TableInputFormat {
   public static final String ROW_KEY_DISTRIBUTOR_CLASS = "hbase.mapreduce.scan.wd.distributor.class";
   public static final String ROW_KEY_DISTRIBUTOR_PARAMS = "hbase.mapreduce.scan.wd.distributor.params";
 
-  private AbstractRowKeyDistributor rowKeyDistributor;
+  private RowKeyDistributor rowKeyDistributor;
 
   @Override
   public void setConf(Configuration conf) {
@@ -45,7 +45,7 @@ public class WdTableInputFormat extends TableInputFormat {
     if (conf.get(ROW_KEY_DISTRIBUTOR_CLASS) != null) {
       String clazz = conf.get(ROW_KEY_DISTRIBUTOR_CLASS);
       try {
-        rowKeyDistributor = (AbstractRowKeyDistributor) Class.forName(clazz).newInstance();
+        rowKeyDistributor = (RowKeyDistributor) Class.forName(clazz).newInstance();
         if (conf.get(ROW_KEY_DISTRIBUTOR_PARAMS) != null) {
           rowKeyDistributor.init(conf.get(ROW_KEY_DISTRIBUTOR_PARAMS));
         }
@@ -74,5 +74,13 @@ public class WdTableInputFormat extends TableInputFormat {
     setScan(originalScan);
 
     return allSplits;
+  }
+  
+  public static void addInfo(Configuration conf, RowKeyDistributor keyDistributor) {
+    conf.set(WdTableInputFormat.ROW_KEY_DISTRIBUTOR_CLASS, keyDistributor.getClass().getCanonicalName());
+    String paramsToStore = keyDistributor.getParamsToStore();
+    if (paramsToStore != null) {
+      conf.set(WdTableInputFormat.ROW_KEY_DISTRIBUTOR_PARAMS, paramsToStore);
+    }
   }
 }

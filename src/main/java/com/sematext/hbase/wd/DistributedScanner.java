@@ -33,13 +33,13 @@ import org.apache.hadoop.hbase.util.Bytes;
  * @author Alex Baranau
  */
 public class DistributedScanner implements ResultScanner {
-  private final AbstractRowKeyDistributor keyDistributor;
+  private final RowKeyDistributor keyDistributor;
   private final ResultScanner[] scanners;
   private final List<Result>[] nextOfScanners;
   private Result next = null;
 
   @SuppressWarnings("unchecked")
-  public DistributedScanner(AbstractRowKeyDistributor keyDistributor, ResultScanner[] scanners) throws IOException {
+  public DistributedScanner(RowKeyDistributor keyDistributor, ResultScanner[] scanners) throws IOException {
     this.keyDistributor = keyDistributor;
     this.scanners = scanners;
     this.nextOfScanners = new List[scanners.length];
@@ -92,7 +92,7 @@ public class DistributedScanner implements ResultScanner {
     }
   }
 
-  public static DistributedScanner create(HTable hTable, Scan originalScan, AbstractRowKeyDistributor keyDistributor) throws IOException {
+  public static DistributedScanner create(HTable hTable, Scan originalScan, RowKeyDistributor keyDistributor) throws IOException {
     Scan[] scans = keyDistributor.getDistributedScans(originalScan);
 
     ResultScanner[] rss = new ResultScanner[scans.length];

@@ -47,11 +47,11 @@ public abstract class RowKeyDistributorTestBase {
   protected static final byte[] TABLE = Bytes.toBytes(TABLE_NAME);
   protected static final byte[] CF = Bytes.toBytes("colfam");
   protected static final byte[] QUAL = Bytes.toBytes("qual");
-  private final AbstractRowKeyDistributor keyDistributor;
+  private final RowKeyDistributor keyDistributor;
   private HBaseTestingUtility testingUtility;
   private HTable hTable;
 
-  public RowKeyDistributorTestBase(AbstractRowKeyDistributor keyDistributor) {
+  public RowKeyDistributorTestBase(RowKeyDistributor keyDistributor) {
     this.keyDistributor = keyDistributor;
   }
 
@@ -182,7 +182,7 @@ public abstract class RowKeyDistributorTestBase {
 
     // Substituting standard TableInputFormat which was set in TableMapReduceUtil.initTableMapperJob(...)
     job.setInputFormatClass(WdTableInputFormat.class);
-    keyDistributor.addInfo(job.getConfiguration());
+    WdTableInputFormat.addInfo(job.getConfiguration(), keyDistributor);
 
     job.setOutputFormatClass(NullOutputFormat.class);
     job.setNumReduceTasks(0);

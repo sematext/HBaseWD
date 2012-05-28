@@ -18,7 +18,6 @@ package com.sematext.hbase.wd;
 import java.io.IOException;
 import java.util.Arrays;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -29,12 +28,7 @@ import org.apache.hadoop.hbase.util.Pair;
  *
  * @author Alex Baranau
  */
-public abstract class AbstractRowKeyDistributor implements Parametrizable {
-  public abstract byte[] getDistributedKey(byte[] originalKey);
-
-  public abstract byte[] getOriginalKey(byte[] adjustedKey);
-
-  public abstract byte[][] getAllDistributedKeys(byte[] originalKey);
+public abstract class AbstractRowKeyDistributor implements RowKeyDistributor {
 
   /**
    * Gets all distributed intervals based on the original start & stop keys.
@@ -77,13 +71,5 @@ public abstract class AbstractRowKeyDistributor implements Parametrizable {
       scans[i].setStopRow(intervals[i].getSecond());
     }
     return scans;
-  }
-
-  public void addInfo(Configuration conf) {
-    conf.set(WdTableInputFormat.ROW_KEY_DISTRIBUTOR_CLASS, this.getClass().getCanonicalName());
-    String paramsToStore = getParamsToStore();
-    if (paramsToStore != null) {
-      conf.set(WdTableInputFormat.ROW_KEY_DISTRIBUTOR_PARAMS, paramsToStore);
-    }
   }
 }
