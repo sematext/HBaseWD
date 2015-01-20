@@ -11,13 +11,6 @@ import java.util.concurrent.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-/**
- * Created with IntelliJ IDEA.
- * User: vinay.varma
- * Date: 1/20/15
- * Time: 3:42 PM
- * To change this template use File | Settings | File Templates.
- */
 public class RowKeyDistributorByOneBytePrefixConcurrencyTest {
     @Test
     public void checkMaxSizeConstraints() throws ExecutionException, InterruptedException {
