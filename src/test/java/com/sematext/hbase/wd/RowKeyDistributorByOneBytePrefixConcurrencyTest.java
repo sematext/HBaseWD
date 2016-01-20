@@ -6,10 +6,7 @@ import org.junit.Test;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -23,7 +20,12 @@ public class RowKeyDistributorByOneBytePrefixConcurrencyTest {
         ExecutorService executorService = Executors.newFixedThreadPool(1000);
         List<Future<byte[]>> futures = Lists.newArrayList();
         for (int i = 0; i < 1500; i++) {
-            futures.add(executorService.submit(() -> rowKeyDist.getDistributedKey(new byte[]{})));
+            futures.add(executorService.submit(new Callable<byte[]>() {
+                @Override
+                public byte[] call() throws Exception {
+                    return rowKeyDist.getDistributedKey(new byte[]{});
+                }
+            }));
         }
         assertEquals(futures.size(), 1500);
         Map<Byte, Integer> groupBy = new HashMap<>();
