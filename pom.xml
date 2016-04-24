@@ -1,13 +1,13 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+  <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.sematext.hbasewd</groupId>
-    <artifactId>hbasewd</artifactId>
-    <version>0.2.1</version>
+  <groupId>com.sematext.hbasewd</groupId>
+  <artifactId>hbasewd</artifactId>
+  <version>0.2.1</version>
 
-    <packaging>jar</packaging>
-    <name>HBaseWD</name>
+  <packaging>jar</packaging>
+  <name>HBaseWD</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -21,14 +21,14 @@
         <testng.version>6.9.9</testng.version>
     </properties>
 
-    <repositories>
-        <repository>
-            <id>apache release</id>
-            <url>https://repository.apache.org/content/repositories/releases/</url>
-        </repository>
-    </repositories>
+  <repositories>
+    <repository>
+      <id>apache release</id>
+      <url>https://repository.apache.org/content/repositories/releases/</url>
+    </repository>
+  </repositories>
 
-    <dependencies>
+  <dependencies>
         <dependency>
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-server</artifactId>
