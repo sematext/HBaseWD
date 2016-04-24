@@ -1,12 +1,12 @@
 /**
  * Copyright 2010 Sematext International
- * <p/>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p/>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p/>
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,17 +15,14 @@
  */
 package com.sematext.hbase.wd;
 
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.client.Table;
-import org.apache.hadoop.hbase.util.Bytes;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+
+import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.util.Bytes;
 
 /**
  * Interface for client-side scanning the data written with keys distribution
@@ -74,7 +71,7 @@ public class DistributedScanner implements ResultScanner {
         // Identical to HTable.ClientScanner implementation
         // Collect values to be returned here
         ArrayList<Result> resultSets = new ArrayList<Result>(nbRows);
-        for (int i = 0; i < nbRows; i++) {
+        for(int i = 0; i < nbRows; i++) {
             Result next = next();
             if (next != null) {
                 resultSets.add(next);

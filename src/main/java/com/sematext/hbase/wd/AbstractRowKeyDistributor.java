@@ -30,13 +30,6 @@ import org.apache.hadoop.hbase.util.Pair;
  * @author Alex Baranau
  */
 public abstract class AbstractRowKeyDistributor implements Parametrizable {
-    /**
-     * Should be thread safe.
-     * Concurrent access should be handled without violating row key definitions.
-     *
-     * @param originalKey  original key
-     * @return array[byte] modified key
-     */
     public abstract byte[] getDistributedKey(byte[] originalKey);
 
     public abstract byte[] getOriginalKey(byte[] adjustedKey);
@@ -47,9 +40,8 @@ public abstract class AbstractRowKeyDistributor implements Parametrizable {
      * Gets all distributed intervals based on the original start & stop keys.
      * Used when scanning all buckets based on start/stop row keys. Should return keys so that all buckets in which
      * records between originalStartKey and originalStopKey were distributed are "covered".
-     *
      * @param originalStartKey start key
-     * @param originalStopKey  stop key
+     * @param originalStopKey stop key
      * @return array[Pair(startKey, stopKey)]
      */
     public Pair<byte[], byte[]>[] getDistributedIntervals(byte[] originalStartKey, byte[] originalStopKey) {
