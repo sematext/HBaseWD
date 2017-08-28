@@ -147,7 +147,7 @@ public class RowKeyDistributorByHashPrefix extends AbstractRowKeyDistributor {
       this.hasher = (Hasher) Class.forName(parts[0]).newInstance();
       this.hasher.init(parts[1]);
     } catch (Exception e) {
-      throw new RuntimeException("RoKeyDistributor initialization failed", e);
+      throw new RuntimeException("RowKeyDistributor initialization failed", e);
     }
   }
 }
