@@ -38,7 +38,7 @@ Distributing records with sequential keys which are being written in up to
 Byte.MAX_VALUE buckets:
 
     byte bucketsCount = (byte) 32; // distributing into 32 buckets
-    RowKeyDistributor keyDistributor =
+    AbstractRowKeyDistributor keyDistributor =
                            new RowKeyDistributorByOneBytePrefix(bucketsCount);
     for (int i = 0; i < 100; i++) {
       Put put = new Put(keyDistributor.getDistributedKey(originalKey));
