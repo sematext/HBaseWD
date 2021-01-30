@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2010 Sematext International
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -57,7 +57,7 @@ public class WdTableInputFormat extends TableInputFormat {
 
   @Override
   public List<InputSplit> getSplits(JobContext context) throws IOException {
-    List<InputSplit> allSplits = new ArrayList<InputSplit>();
+    List<InputSplit> allSplits = new ArrayList<>();
     Scan originalScan = getScan();
 
     Scan[] scans = rowKeyDistributor.getDistributedScans(originalScan);

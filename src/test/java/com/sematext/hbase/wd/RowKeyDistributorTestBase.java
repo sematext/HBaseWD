@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2010 Sematext International
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,58 +16,69 @@
 package com.sematext.hbase.wd;
 
 import java.io.IOException;
-
+import java.util.concurrent.ExecutionException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
+import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
 import org.apache.hadoop.hbase.mapreduce.TableMapper;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.TestInstance.Lifecycle;
 
 /**
  * Provides basic tests for row key distributor
  *
  * @author Alex Baranau
  */
+@TestInstance(Lifecycle.PER_CLASS)
 public abstract class RowKeyDistributorTestBase {
   protected static final String TABLE_NAME = "table";
-  protected static final byte[] TABLE = Bytes.toBytes(TABLE_NAME);
   protected static final byte[] CF = Bytes.toBytes("colfam");
   protected static final byte[] QUAL = Bytes.toBytes("qual");
   private final AbstractRowKeyDistributor keyDistributor;
   private HBaseTestingUtility testingUtility;
-  private HTable hTable;
+  private Table table;
 
   public RowKeyDistributorTestBase(AbstractRowKeyDistributor keyDistributor) {
     this.keyDistributor = keyDistributor;
   }
 
-  @Before
+  @BeforeAll
   public void before() throws Exception {
     testingUtility = new HBaseTestingUtility();
-    testingUtility.startMiniZKCluster();
-    testingUtility.startMiniCluster(1);
-    hTable = testingUtility.createTable(TABLE, CF);
+    testingUtility.startMiniCluster();
+    TableName tableName = TableName.valueOf(TABLE_NAME);
+    HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
+    HColumnDescriptor columnDescriptor = new HColumnDescriptor(Bytes.toString(CF));
+    tableDescriptor.addFamily(columnDescriptor);
+    testingUtility.getHBaseAdmin().createTable(tableDescriptor);
+    table = testingUtility.getConnection().getTable(tableName);
   }
 
-  @After
+  @AfterAll
   public void after() throws Exception {
-    hTable = null;
+    table = null;
     testingUtility.shutdownMiniCluster();
-    testingUtility.shutdownMiniZKCluster();
     testingUtility = null;
   }
 
@@ -79,16 +90,16 @@ public abstract class RowKeyDistributorTestBase {
     byte[] distributedKey = keyDistributor.getDistributedKey(key);
     byte[] value = Bytes.toBytes("some");
 
-    hTable.put(new Put(distributedKey).add(CF, QUAL, value));
+    table.put(new Put(distributedKey).add(CF, QUAL, value));
 
-    Result result = hTable.get(new Get(distributedKey));
-    Assert.assertArrayEquals(key, keyDistributor.getOriginalKey(result.getRow()));
-    Assert.assertArrayEquals(value, result.getValue(CF, QUAL));
+    Result result = table.get(new Get(distributedKey));
+    assertArrayEquals(key, keyDistributor.getOriginalKey(result.getRow()));
+    assertArrayEquals(value, result.getValue(CF, QUAL));
   }
 
-  /** Test scan with start and stop key. */
+  /* Test scan with start and stop key. */
   @Test
-  public void testSimpleScanBounded() throws IOException {
+  public void testSimpleScanBounded() throws IOException, InterruptedException, ExecutionException {
     long origKeyPrefix = System.currentTimeMillis();
 
     int seekIntervalMinValue = 100;
@@ -101,14 +112,14 @@ public abstract class RowKeyDistributorTestBase {
 
   /** Test scan over the whole table. */
   @Test
-  public void testSimpleScanUnbounded() throws IOException {
+  public void testSimpleScanUnbounded() throws IOException, InterruptedException, ExecutionException {
     long origKeyPrefix = System.currentTimeMillis();
     testSimpleScanInternal(origKeyPrefix, new Scan(), 500, 500, 0, 999);
   }
 
   /** Test scan without stop key. */
   @Test
-  public void testSimpleScanWithoutStopKey() throws IOException {
+  public void testSimpleScanWithoutStopKey() throws IOException, InterruptedException, ExecutionException {
     long origKeyPrefix = System.currentTimeMillis();
     int seekIntervalMinValue = 100;
     byte[] startKey = Bytes.toBytes(origKeyPrefix + seekIntervalMinValue);
@@ -137,6 +148,10 @@ public abstract class RowKeyDistributorTestBase {
 
   private int writeTestData(long origKeyPrefix, int numRows, int rowKeySeed,
                             int seekIntervalMinValue, int seekIntervalMaxValue) throws IOException {
+
+    testingUtility.getHBaseAdmin().disableTable(TABLE_NAME);
+    testingUtility.getHBaseAdmin().truncateTable(TableName.valueOf(TABLE_NAME), true);
+
     int valuesCountInSeekInterval = 0;
     for (int i = 0; i < numRows; i++) {
       int val = rowKeySeed + i - i * (i % 2) * 2; // i.e. 500, 499, 502, 497, 504, ...
@@ -144,18 +159,20 @@ public abstract class RowKeyDistributorTestBase {
       byte[] key = Bytes.toBytes(origKeyPrefix + val);
       byte[] distributedKey = keyDistributor.getDistributedKey(key);
       byte[] value = Bytes.toBytes(val);
-      hTable.put(new Put(distributedKey).add(CF, QUAL, value));
+      Put put = new Put(distributedKey);
+      put.addColumn(CF, QUAL, value);
+      table.put(put);
     }
     return valuesCountInSeekInterval;
   }
 
   private void testSimpleScanInternal(long origKeyPrefix, Scan scan, int numValues, int startWithValue,
-                                      int seekIntervalMinValue, int seekIntervalMaxValue) throws IOException {
+                                      int seekIntervalMinValue, int seekIntervalMaxValue) throws IOException, InterruptedException, ExecutionException {
     int valuesCountInSeekInterval =
             writeTestData(origKeyPrefix, numValues, startWithValue, seekIntervalMinValue, seekIntervalMaxValue);
 
     // TODO: add some filters to the scan for better testing
-    ResultScanner distributedScanner = DistributedScanner.create(hTable, scan, keyDistributor);
+    ResultScanner distributedScanner = DistributedScanner.create(table, scan, keyDistributor);
 
     Result previous = null;
     int countMatched = 0;
@@ -164,16 +181,16 @@ public abstract class RowKeyDistributorTestBase {
       if (previous != null) {
         byte[] currentRowOrigKey = keyDistributor.getOriginalKey(current.getRow());
         byte[] previousRowOrigKey = keyDistributor.getOriginalKey(previous.getRow());
-        Assert.assertTrue(Bytes.compareTo(currentRowOrigKey, previousRowOrigKey) >= 0);
+        assertTrue(Bytes.compareTo(currentRowOrigKey, previousRowOrigKey) >= 0);
 
         int currentValue = Bytes.toInt(current.getValue(CF, QUAL));
-        Assert.assertTrue(currentValue >= seekIntervalMinValue);
-        Assert.assertTrue(currentValue <= seekIntervalMaxValue);
+        assertTrue(currentValue >= seekIntervalMinValue);
+        assertTrue(currentValue <= seekIntervalMaxValue);
       }
       previous = current;
     }
 
-    Assert.assertEquals(valuesCountInSeekInterval, countMatched);
+    assertEquals(valuesCountInSeekInterval, countMatched);
   }
 
   private void testMapReduceInternal(long origKeyPrefix, Scan scan, int numValues, int startWithValue,
@@ -197,10 +214,10 @@ public abstract class RowKeyDistributorTestBase {
     job.setNumReduceTasks(0);
 
     boolean succeeded = job.waitForCompletion(true);
-    Assert.assertTrue(succeeded);
+    assertTrue(succeeded);
 
     long mapInputRecords = job.getCounters().findCounter(RowCounterMapper.Counters.ROWS).getValue();
-    Assert.assertEquals(valuesCountInSeekInterval, mapInputRecords);
+    assertEquals(valuesCountInSeekInterval, mapInputRecords);
   }
 
   /**
@@ -209,10 +226,10 @@ public abstract class RowKeyDistributorTestBase {
    */
   static class RowCounterMapper extends TableMapper<ImmutableBytesWritable, Result> {
     /** Counter enumeration to count the actual rows. */
-    public static enum Counters {ROWS}
+    public enum Counters {ROWS}
 
     @Override
-    public void map(ImmutableBytesWritable row, Result values, Context context) throws IOException {
+    public void map(ImmutableBytesWritable row, Result values, Context context) {
       for (KeyValue value: values.list()) {
         if (value.getValue().length > 0) {
           context.getCounter(Counters.ROWS).increment(1);

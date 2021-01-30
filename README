@@ -111,7 +111,7 @@ https://groups.google.com/group/hbasewd/
 Build Notes:
 ------------
 Tests take some time to execute (can be up to several minutes), to skip
-their execution use -Dmaven.skip.tests=true.
+their execution use ./gradlew build -x test.
 
 The latest stable version can be linked from you maven project with:
 
@@ -127,7 +127,7 @@ The latest stable version can be linked from you maven project with:
   <dependency>
     <groupId>com.sematext.hbasewd</groupId>
     <artifactId>hbasewd</artifactId>
-    <version>0.1.0</version>
+    <version>0.3.0</version>
   </dependency>
 
 Author:
