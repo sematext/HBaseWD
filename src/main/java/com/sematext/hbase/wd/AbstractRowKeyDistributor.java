@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2010 Sematext International
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,11 +17,9 @@ package com.sematext.hbase.wd;
 
 import java.io.IOException;
 import java.util.Arrays;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
 
 /**
@@ -47,14 +45,30 @@ public abstract class AbstractRowKeyDistributor implements Parametrizable {
   public Pair<byte[], byte[]>[] getDistributedIntervals(byte[] originalStartKey, byte[] originalStopKey) {
     byte[][] startKeys = getAllDistributedKeys(originalStartKey);
     byte[][] stopKeys;
+
     if (Arrays.equals(originalStopKey, HConstants.EMPTY_END_ROW)) {
-      Arrays.sort(startKeys, Bytes.BYTES_RAWCOMPARATOR);
-      // stop keys are the start key of the next interval
+      // Stop keys are one more than each prefix.
       stopKeys = getAllDistributedKeys(HConstants.EMPTY_BYTE_ARRAY);
-      for (int i = 0; i < stopKeys.length - 1; i++) {
-        stopKeys[i] = stopKeys[i + 1];
+      for (int i = 0; i < stopKeys.length; i++) {
+        byte[] stopKey = stopKeys[i];
+        boolean carry = false;
+        int increment = 1;
+        for (int j = stopKey.length - 1; j >= 0; --j) {
+          int stopKeyByteInt = stopKey[j];
+           stopKeyByteInt += increment;
+           increment = 0;
+          if (carry) {
+            ++stopKeyByteInt;
+          }
+          if (stopKeyByteInt >= 256) {
+            stopKey[j] = (byte)(stopKeyByteInt % 256);
+            carry = true;
+          } else {
+            stopKey[j] = (byte)stopKeyByteInt;
+            carry = false;
+          }
+        }
       }
-      stopKeys[stopKeys.length - 1] = HConstants.EMPTY_END_ROW;
     } else {
       stopKeys = getAllDistributedKeys(originalStopKey);
       assert stopKeys.length == startKeys.length;
@@ -62,7 +76,7 @@ public abstract class AbstractRowKeyDistributor implements Parametrizable {
 
     Pair<byte[], byte[]>[] intervals = new Pair[startKeys.length];
     for (int i = 0; i < startKeys.length; i++) {
-      intervals[i] = new Pair<byte[], byte[]>(startKeys[i], stopKeys[i]);
+      intervals[i] = new Pair<>(startKeys[i], stopKeys[i]);
     }
 
     return intervals;

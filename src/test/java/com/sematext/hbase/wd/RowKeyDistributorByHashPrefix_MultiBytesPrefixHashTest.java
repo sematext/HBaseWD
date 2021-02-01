@@ -13,7 +13,7 @@ public class RowKeyDistributorByHashPrefix_MultiBytesPrefixHashTest extends RowK
 
     @Override
     public byte[] getHashPrefix(byte[] originalKey) {
-      return ALL_PREFIXES[Math.abs(originalKey[originalKey.length - 1] % 3)]; // close to random prefix
+      return ALL_PREFIXES[(originalKey[originalKey.length - 1] & 0xff) % 3]; // close to random prefix
     }
 
     @Override
